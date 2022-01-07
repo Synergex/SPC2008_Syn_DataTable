@@ -1,0 +1,12 @@
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\ResolveAssemblyReference.cache
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.Properties.Resources.resources
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.csproj.GenerateResource.Cache
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\bin\Debug\DataTableDemo.exe
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\bin\Debug\DataTableDemo.pdb
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\bin\Debug\TableDemo.dll
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.exe
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.pdb
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.customerMaint.resources
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.Main.resources
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.ProductList.resources
+D:\Development\SynPSG\VSExamples\DataTableDemo\DataTableDemo\obj\Debug\DataTableDemo.Background.resources
