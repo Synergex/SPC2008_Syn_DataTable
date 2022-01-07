@@ -1,0 +1,398 @@
+;;***************************************************************************
+;;
+;;  Synergy Professional Services Group
+;;  Pseduo Data Columns Collection class
+;;
+;;
+;;***************************************************************************
+
+import System.Collections
+import SynPSGSystem.Exception
+import SynPSGSystem.Type
+import SynPSG.Data
+
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSG.Data
+
+	public sealed class DataColumnCollection
+		
+		;;*******************************************************************
+		;;
+		;; Default constructor
+		;;
+		;;*******************************************************************
+		
+		public method DataColumnCollection
+			
+		proc
+			
+			;;default value
+			m_columnNumber = 0
+			m_columnCollection = new ArrayList()
+			
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  Public methods
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;;  Add
+		;;
+		;;  Creates and adds a DataColumn to the collection
+		;;
+		;;*******************************************************************
+
+		public method Add			,void
+			
+		proc
+			
+			createColumn()
+			setDefaultName()
+			
+			;;default data type
+			m_column.DataType = SynPSGSystem.Type.DataTypes.String
+			
+			;;add to the collection
+			addColumnToCollection()
+			
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  Add(String)
+		;;
+		;;  Creates and adds a DataColumn with the specified name
+		;;
+		;;*******************************************************************
+
+		public method Add					,void
+			in req ColumnName				,@String
+		proc
+
+			if (ColumnName == ^null)
+				throw new SynPSGSystem.Exception.ArgumentNullException("Column specified is Null")
+			
+			checkNameLength(ColumnName)
+			
+			createColumn()
+
+			setColumnName(ColumnName)
+			
+			setColumnType(SynPSGSystem.Type.DataTypes.String)
+			
+			;;add to the collection
+			addColumnToCollection()
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  Add(DataColumn)
+		;;
+		;;  Creates and adds the specified DataColumn to the collection
+		;;
+		;;*******************************************************************
+
+		public method Add						,void
+			in req DataColumn					,@SynPSG.Data.DataColumn
+		proc
+
+			;;copy DataColumn details
+			m_column = DataColumn
+			setDefaultName()
+
+			;;add to the collection
+			addColumnToCollection()
+
+			mreturn
+			
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  Add(String, Type)
+		;;
+		;;  Creates and adds a DataColumn with the specified name and type
+		;;
+		;;*******************************************************************
+
+		public method Add						,void
+			in req ColumnName					,@String
+			in req ColumnType					,SynPSGSystem.Type.DataTypes
+		proc
+
+			checkNameLength(ColumnName)
+			createColumn()
+
+
+			setColumnName(ColumnName)
+			
+			setColumnType(ColumnType)
+
+			;;add to the collection
+			addColumnToCollection()
+
+			mreturn
+		endmethod
+
+
+		;;*******************************************************************
+		;;
+		;;  Public properties
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;;  Count
+		;;
+		;;  Return the number of columns in the collection
+		;;
+		;;*******************************************************************
+
+		public property Count					,Int
+		
+			method get
+			proc
+				mreturn m_columnCollection.Count
+			endmethod
+			
+		endproperty
+		
+		;;*******************************************************************
+		;;
+		;;  Indexer
+		;;
+		;;  Allows access to the elements of the collection
+		;;
+		;;*******************************************************************
+
+		
+		public property indexer					,@SynPSG.Data.DataColumn
+			in req Index						,Int
+			method get
+				
+			stack record
+				count							,i4
+				
+			proc
+				;;return the data column at the requested index
+				
+				count = m_columnCollection.Count
+
+				if (Index<0 || Index>=count)
+					throw new SynPSGSystem.Exception.IndexOutOfRangeException("Column Index out of range", Index)
+				
+				mreturn (SynPSG.Data.DataColumn) m_columnCollection[Index]
+				
+			endmethod
+			
+		endproperty
+		
+		;;*******************************************************************
+		;;
+		;; Private field declarations
+		;;
+		;;*******************************************************************
+
+		private m_columnCollection				,@ArrayList
+		private m_column						,@SynPSG.Data.DataColumn			
+		
+		;; array list is now zero based!!
+		private static m_columnNumber			,Int
+		
+		;;*******************************************************************
+		;;
+		;; Private methods
+		;;
+		;;*******************************************************************
+		
+		;;*******************************************************************
+		;;
+		;; setDefaultName
+		;;
+		;; create the column object
+		;;
+		;;*******************************************************************
+
+		private method setDefaultName			,void
+
+		stack record
+			name					,a CONST_MAX_NAME_LENGTH
+
+		proc
+			if (m_column.ColumnName.Length==0)
+			  begin
+				;;give it a default name
+				name = makeDefaultName()
+				m_column.ColumnName = name
+				
+			  end
+
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; makeDefaultName
+		;;
+		;; build the default column name
+		;;
+		;;*******************************************************************
+
+		private method makeDefaultName			,@String
+
+		stack record
+			name					,a CONST_MAX_NAME_LENGTH
+
+		proc
+
+			s_bld(name,, "%a%d", CONST_COLUMN_PREFIX, m_columnNumber)
+			incr m_columnNumber
+			mreturn name
+
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; setColumnName
+		;;
+		;; set the name of the column
+		;;
+		;;*******************************************************************
+
+		private method setColumnName			,void
+			in req ColumnName					,@String
+			
+		proc
+
+			;;specify name
+			m_column.ColumnName = ColumnName
+
+			mreturn
+			
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; setColumnType
+		;;
+		;; set the data type of the column
+		;;
+		;;*******************************************************************
+
+		private method setColumnType			,void
+			in req ColumnType					,SynPSGSystem.Type.DataTypes
+
+		proc
+
+			;;default data type
+			m_column.DataType = ColumnType
+
+			mreturn
+
+		endmethod
+
+				
+		;;*******************************************************************
+		;;
+		;; createColumn
+		;;
+		;; create the column object
+		;;
+		;;*******************************************************************
+
+		private method createColumn				,void
+		proc
+
+			;;create the column opbject
+			m_column = new SynPSG.Data.DataColumn()
+			
+			mreturn
+
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; addColumnToCollection
+		;;
+		;; Add the column details to the collection
+		;;
+		;;*******************************************************************
+
+		private method addColumnToCollection	,void
+		proc
+
+			if (m_columnCollection == ^NULL)
+			  begin
+				;;default column numbering base
+				m_columnNumber = 0
+
+				;;create the array list collection instance
+
+				m_columnCollection = new System.collections.ArrayList()
+			  end
+			  
+			;;first we need to check the column name is not duplicated
+			checkForDuplicateColumn() 
+			
+			m_columnCollection.add((System.Object)m_column)
+
+			mreturn
+
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; checkForDuplicateColumn
+		;; 
+		;; Throw an exception if the column name is duplicated
+		;;
+		;;*******************************************************************
+
+		private method checkForDuplicateColumn	,void
+			
+		stack record
+			count								,int
+			
+		proc
+			
+			;;we can not allow duplicate column names
+			
+			for count from 0 thru m_columnCollection.Count - 1
+			  begin
+				data column						,@SynPSG.data.DataColumn
+				column = (SynPSG.data.DataColumn) m_columnCollection[count]
+				if (column.ColumnName == m_column.ColumnName)
+					throw new SynPSGSystem.Exception.DuplicateNameException("Duplicate column name encountered", m_column.ColumnName)
+			  end
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; checkNameLength
+		;; 
+		;; Throw an exception if the name is too long
+		;;
+		;;*******************************************************************
+
+		private method checkNameLength			,void
+			in req Name							,String
+		proc
+			if (Name.Length>100)
+				throw new SynPSGSystem.Exception.ColumnNameTooLongException("Column name exceed allowable length", Name)
+			mreturn
+		endmethod
+
+	endclass
+
+endnamespace

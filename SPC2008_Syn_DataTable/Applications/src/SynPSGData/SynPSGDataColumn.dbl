@@ -1,0 +1,305 @@
+;;***************************************************************************
+;;
+;;  Synergy Professional Services Group
+;;  Pseduo Data Row class
+;;
+;;
+;;***************************************************************************
+
+import SynPSGSystem.Type
+import SynPSGSystem.Exception
+
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSG.Data
+
+
+	public sealed class DataColumn
+		
+		;;*******************************************************************
+		;;
+		;; Public default constructor
+		;;
+		;;*******************************************************************
+
+		public method DataColumn
+
+		proc
+
+			;;set field defaults
+			
+			m_columnName = ""
+			setDefaultColumnType()
+			m_maxLength = 0
+			m_caption = ""
+			m_allowDBNull = true
+			m_autoIncrement = false
+			m_readOnly = false
+			
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; alternative constructor
+		;; Accepts the column name
+		;;
+		;;*******************************************************************
+
+		public method DataColumn
+			in req ColumnName					,@string
+			;end of argument list
+			this()
+
+		proc
+
+			checkNameLength(ColumnName)
+			m_columnName = ColumnName
+			
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; alternative constructor
+		;; Accepts the column name and column data type
+		;;
+		;;*******************************************************************
+
+		public method DataColumn
+			in req ColumnName					,@string
+			in req DataType						,DataTypes
+			;end of argument list
+			this()
+		proc
+
+			checkNameLength(ColumnName)
+			m_columnName = ColumnName
+			m_dataType = DataType
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  The following are the defined public properties
+		;;
+		;;*******************************************************************
+		
+		
+		;;*******************************************************************
+		;;
+		;;  ColumnName
+		;;
+		;;  gets or sets the column name
+		;;
+		;;*******************************************************************
+		
+		public property ColumnName				,@String
+
+			method get
+			proc
+				mreturn m_columnName
+			endmethod
+
+			method set
+			proc
+				m_columnName = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  MaxLength
+		;;
+		;;  gets or sets the maximum length of a text column
+		;;
+		;;*******************************************************************
+		
+		public property MaxLength				,Int
+
+			method get
+			proc
+				mreturn m_maxLength
+			endmethod
+
+			method set
+			proc
+				m_maxLength = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  Caption
+		;;
+		;;  gets or sets the caption for the column
+		;;
+		;;*******************************************************************
+		
+		public property Caption					,@String
+
+			method get
+			proc
+				mreturn m_caption
+			endmethod
+
+			method set
+			proc
+				m_caption = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  DataType
+		;;
+		;;  gets or sets the data type stored in the column
+		;;
+		;;*******************************************************************
+		
+		public property DataType				,SynPSGSystem.Type.DataTypes
+
+			method get
+			proc
+				mreturn m_dataType
+			endmethod
+
+			method set
+			proc
+				m_dataType = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  AllowDBNull
+		;;
+		;;  gets or sets a value indicating whether null values are allowed
+		;;
+		;;*******************************************************************
+		
+		public property AllowDBNull				,BoolDataType
+
+			method get
+			proc
+				mreturn m_allowDBNull
+			endmethod
+
+			method set
+			proc
+				m_allowDBNull = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  AutoIncrement
+		;;
+		;;  gets or sets a value indicating whether the column automatically
+		;;  increments the value of the column for new rows added to the
+		;;  table
+		;;
+		;;*******************************************************************
+		
+		public property AutoIncrement			,BoolDataType
+
+			method get
+			proc
+				mreturn m_autoIncrement
+			endmethod
+
+			method set
+			proc
+				m_autoIncrement = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  ReadOnly
+		;;
+		;;  gets or sets a value indicating whether the column is read only
+		;;
+		;;*******************************************************************
+		
+		public property ReadOnly			,BoolDataType
+
+			method get
+			proc
+				mreturn m_readOnly
+			endmethod
+
+			method set
+			proc
+				m_readOnly = value
+			endmethod
+
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Private field declarations
+		;;
+		;;*******************************************************************
+		
+		;;private fields holding column details
+		private m_columnName					,@String
+		private m_maxLength						,Int
+		private m_caption						,@String
+		private m_dataType						,SynPSGSystem.Type.DataTypes
+		private m_allowDBNull					,BoolDatatype
+		private m_autoIncrement					,BoolDatatype
+		private m_readOnly						,BoolDatatype
+		
+		;;*******************************************************************
+		;;
+		;; Private class methods
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;; setDefaultColumnType
+		;; 
+		;; Define the default column type when not specificed
+		;;
+		;;*******************************************************************
+
+		private method setDefaultColumnType		,void
+
+		proc
+
+			;;default data type
+			m_dataType = SynPSGSystem.Type.DataTypes.String
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; checkNameLength
+		;; 
+		;; Throw an exception if the name is too long
+		;;
+		;;*******************************************************************
+
+		private method checkNameLength			,void
+			in req Name							,String
+		proc
+			if (Name.Length>100)
+				throw new SynPSGSystem.Exception.ColumnNameTooLongException("Name exceeds maximum length allowed", Name)
+			mreturn
+		endmethod
+	endclass
+
+endnamespace
+
+
+

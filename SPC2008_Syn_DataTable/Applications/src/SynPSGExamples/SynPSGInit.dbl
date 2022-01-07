@@ -1,0 +1,8 @@
+subroutine SynPSGInit
+	
+proc
+	
+	openelb("EXE:SynPSGData")
+	openelb("EXE:SynPSGSystem")
+	xreturn
+end

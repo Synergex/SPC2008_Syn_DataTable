@@ -1,0 +1,639 @@
+
+;;***************************************************************************
+;;
+;;  Synergy Professional Services Group
+;;  Pseduo Data Table class
+;;
+;;  This DataTable class allows for the creation of a Synergy DataTable,
+;;  including columns and their definitions.  Rows can be added and the 
+;;  resulting table serialised into XML and transported via xfServerPlus
+;;  to a .NET client.  On the clinet the passed XML can be de-serialised
+;;  to create a System.Data.DataTable().
+;;
+;;***************************************************************************
+
+import SynPSGSystem
+import SynPSGSystem.Type
+import SynPSG.Data
+
+.include "DEF:SynPSGDefines.def"
+.include "DBLDIR:synxml.def"
+
+namespace SynPSG.Data
+
+;include the data type mapping defines	
+	
+	public sealed class DataTable
+		
+		
+		;;*******************************************************************
+		;;
+		;;  Public default constructor
+		;;
+		;;*******************************************************************
+
+		public method DataTable
+		
+		proc
+			
+			m_tableName = "TempTableName"
+			createTable()
+			createRows()
+			
+			mreturn	;;logical end
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  alternate constructor accepts table name
+		;;
+		;;*******************************************************************
+
+		public method DataTable
+			in req TableName					,@String
+			;;end of argument list
+		proc
+
+			m_tableName = TableName
+			createTable()
+			createRows()
+			
+			mreturn	;;logical end
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  The following are the defined public methods
+		;;
+		;;*******************************************************************
+		
+		
+		;;*******************************************************************
+		;;
+		;;  Clear()
+		;;
+		;;  Clears the DataTable of all data.
+		;;*******************************************************************
+		
+		public method Clear	,void
+		proc
+			
+			;;remove all associated data rows
+			createRows()
+			
+			mreturn
+		endmethod
+		
+		
+		;;*******************************************************************
+		;;
+		;;  NewRow()
+		;;
+		;;  Creates a new DataRow with the same schema as the table.
+		;;*******************************************************************
+		
+		public method NewRow					,@SynPSG.data.DataRow
+			
+		stack record
+			rowObject							,@SynPSG.data.DataRow
+			
+		proc
+
+			rowObject = new SynPSG.data.DataRow(this)
+
+			mreturn rowObject
+
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  WriteXML()
+		;;
+		;;  Writes the table as XML to a file
+		;;
+		;;*******************************************************************
+		
+		public method WriteXML					,void
+			in req FileName						,@String
+			in req XmlWriteMode					,XMLWriteMode
+		proc
+
+			createXMLStructure(XmlWriteMode)
+			
+			;;finish off the document, and write to the file
+			xml_doc_tofile(m_xml_doc, FileName)
+			xml_doc_delete(m_xml_doc)	;;release resources
+
+			mreturn
+			
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  WriteXMLSchema()
+		;;
+		;;  Writes the table as XML to a file
+		;;
+		;;*******************************************************************
+
+		public method WriteXMLSchema			,void
+			in req FileName						,@String
+		proc
+
+			writeTheXMLSchema(false)
+			
+			;;finish off the document, and write to the file
+			xml_doc_tofile(m_xml_doc, FileName)
+			xml_doc_delete(m_xml_doc)	;;release resources
+
+			mreturn
+
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  ReturnXML()
+		;;
+		;;  returns the XML as a tring
+		;;
+		;;*******************************************************************
+
+		public method ReturnXML					,@String
+			in req XmlWriteMode					,XMLWriteMode
+		;end of argument list
+			
+		stack record
+			handle								,Int
+			length								,Int
+			returnString						,@String
+
+		structure xmlData
+			field								,a1
+
+		.define MAX	,65535
+			
+		proc
+
+			xml_option("ENCODE", SYNESCAPE_ESCAPE)
+			
+			createXMLStructure(XmlWriteMode)
+
+			;;finish off the document, and return it as a string
+			m_xml_string = xml_doc_tostring(m_xml_doc)
+			handle = xml_string_gethandle(m_xml_string)
+			length = xml_string_getsize(m_xml_string)
+			
+			if (length > MAX)	;;more than 64K
+			then 
+			begin
+				data	l	,int
+				data	s	,int
+
+				returnString = new String(^m(xmlData(s = 1 : l = MAX), handle))
+				length -= MAX
+				s = MAX + 1
+				do
+				begin
+					if (( l = length) > MAX)
+						l = MAX
+					returnString = String.ConCat(returnString, ^m(xmlData(s:l), handle))
+					length -= MAX
+					s += MAX
+				end
+				until (length <= 0)
+			end
+			else
+			begin
+				returnString = new String(^m(xmlData(1:length), handle))
+			end
+			
+			xml_string_delete(m_xml_string)
+			xml_doc_delete(m_xml_doc)	;;release resources
+            
+			mreturn returnString
+			
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  The following are the defined public properties
+		;;
+		;;*******************************************************************
+		
+		
+		;;*******************************************************************
+		;;
+		;;  CaseSensetive
+		;;
+		;;  Indicates whether string comparisons within the table are case-sensitive.
+		;;
+		;;*******************************************************************
+		
+		public property CaseSensitive			,BoolDataType
+		
+			method get
+			proc
+				mreturn m_caseSensitive
+			endmethod
+			
+			method set
+			proc
+				m_caseSensitive = value
+			endmethod
+		
+		endproperty
+		
+		;;*******************************************************************
+		;;
+		;;  TableName
+		;;
+		;;  Gets or sets the name of the Data Table
+		;;
+		;;*******************************************************************
+		
+		public property TableName				,@string
+
+			method get
+			proc
+				mreturn m_tableName
+			endmethod
+
+			method set
+			proc
+				m_tableName = value
+			endmethod
+
+		endproperty
+		
+		;;*******************************************************************
+		;;
+		;;  Columns
+		;;
+		;;  Gets the collection of columns that belong to the table
+		;;
+		;;*******************************************************************
+		
+		public property Columns					,@SynPSG.Data.DataColumnCollection
+			method get
+			proc
+				;;return thge columns collection
+				mreturn m_columns				
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  Rows
+		;;
+		;;  Gets the collection of rows that belong to the table
+		;;
+		;;*******************************************************************
+		
+		public property Rows					,@SynPSG.Data.DataRowCollection
+			method get
+			proc
+				;;return thge columns collection
+				mreturn m_rows
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Private field declarations
+		;;
+		;;*******************************************************************
+
+		private m_tableName						,string
+		private m_caseSensitive					,BoolDataType
+		private m_columns						,@SynPSG.Data.DataColumnCollection
+		private m_rows							,@SynPSG.Data.DataRowCollection
+		
+		;;interrnal XML document fields
+		private m_xml_doc						,XML_DOC_TYPE
+		private m_xml_root						,XML_ELEM_TYPE
+		private m_xml_schema					,XML_ELEM_TYPE
+		private m_xml_element					,XML_ELEM_TYPE
+		private m_xml_complexType				,XML_ELEM_TYPE
+		private m_xml_choice		   			,XML_ELEM_TYPE
+		private m_xml_sequence		   			,XML_ELEM_TYPE
+		private m_xml_table						,XML_ELEM_TYPE
+		private m_xml_string					,XML_STRING_TYPE
+		
+        ;;*******************************************************************
+		;;
+		;; Private class methods
+		;;
+		;;*******************************************************************
+		
+        ;;*******************************************************************
+		;;
+		;; createTable
+		;;
+		;; Create the actual table.
+		;;
+		;;*******************************************************************
+		private method createTable				,void
+		proc
+
+			;create the Data Columns colection
+			m_columns = new SynPSG.Data.DataColumnCollection()
+			
+			mreturn
+
+		endmethod
+		
+        ;;*******************************************************************
+		;;
+		;; createRows
+		;;
+		;; Create the actual row holder.
+		;;
+		;;*******************************************************************
+
+		private method createRows				,void
+		proc
+
+			;create the Data rows collection
+			m_rows = new SynPSG.Data.DataRowCollection()
+
+			mreturn
+		endmethod
+
+        ;;*******************************************************************
+		;;
+		;; createXMLStructure
+		;;
+		;; Create the required XML structure in memory
+		;;
+		;;*******************************************************************
+		private method createXMLStructure		,void
+			in req inXmlWriteMode				,XMLWriteMode
+		;end of argument list
+
+		proc
+			
+			using inXmlWriteMode select
+			(XMLWriteMode.DiffGram),
+			  begin
+				throw new Exception("DiffGram not supported")
+			  end
+			(XMLWriteMode.IgnoreSchema),
+			  begin
+				writeXMLDataOnly()
+			  end
+			(XMLWriteMode.WriteSchema),
+			  begin
+				writeXMLSchemaAndData()
+			  end
+			endusing
+			
+		endmethod
+		
+        ;;*******************************************************************
+		;;
+		;; writeXMLDataOnly
+		;;
+		;; Build an XML document that includes just the data
+		;;
+		;;*******************************************************************
+		private method writeXMLDataOnly			,void
+		proc
+			
+			;first create a document
+		
+			m_xml_doc = xml_doc_create
+			if (m_xml_doc)	;;successful
+			  begin
+		
+				;;define declaration
+				xml_doc_adddeclaration(m_xml_doc, 'xml version="1.0" standalone="yes"', '')
+		
+				;;create root element
+				m_xml_root = xml_elem_create()
+				xml_elem_setname(m_xml_root, "DocumentElement")
+				xml_doc_setroot(m_xml_doc, m_xml_root)
+				
+				writeTheXMLData()
+				
+			  end
+			mreturn
+		endmethod
+		
+        ;;*******************************************************************
+		;;
+		;; writeXMLSchemaAndData
+		;;
+		;; Build an XML document that includes the data and the schema
+		;;
+		;;*******************************************************************
+		private method writeXMLSchemaAndData	,void
+			
+		stack record
+			count								,Int
+		proc
+
+			writeTheXMLSchema(true)
+			;;build the data into the document
+			writeTheXMLData()
+			
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; writeXMLSchema
+		;;
+		;; Build an XML document that includes the schema
+		;;
+		;;*******************************************************************
+		private method writeTheXMLSchema		,void
+			in req includeDataSet				,BoolDataType
+
+		stack record
+			count								,Int
+		proc
+
+			;first create a document
+
+			m_xml_doc = xml_doc_create
+			if (m_xml_doc)	;;successful
+			  begin
+
+				;;define declaration
+				xml_doc_adddeclaration(m_xml_doc, 'xml version="1.0" standalone="yes"', '')
+
+				if (includeDataSet == true)
+				then 
+				  begin
+					;;create root element
+					m_xml_root = xml_elem_create()
+					xml_elem_setname(m_xml_root, "NewDataSet")
+					xml_doc_setroot(m_xml_doc, m_xml_root)
+					;;create schema element
+					m_xml_schema = xml_elem_create()
+					xml_elem_setname(m_xml_schema, "xs:schema")
+					xml_elem_setattribute(m_xml_schema, "id", "NewDataSet")
+					xml_elem_setattribute(m_xml_schema, "xmlns", "")
+					xml_elem_setattribute(m_xml_schema, "xmlns:xs", "http://www.w3.org/2001/XMLSchema")
+					xml_elem_setattribute(m_xml_schema, "xmlns:msdata", "urn:schemas-microsoft-com:xml-msdata")
+					xml_elem_addchild(m_xml_root, m_xml_schema)
+				  end
+				else
+				  begin
+					;;create schema element
+					m_xml_schema = xml_elem_create()
+					xml_elem_setname(m_xml_schema, "xs:schema")
+					xml_doc_setroot(m_xml_doc, m_xml_schema)					
+				  end
+
+				;;create element element
+				m_xml_element = xml_elem_create()
+				xml_elem_setname(m_xml_element, "xs:element")
+				xml_elem_setattribute(m_xml_element, "name", "NewDataSet")
+				xml_elem_setattribute(m_xml_element, "msdata:IsDataSet", "true")
+				xml_elem_setattribute(m_xml_element, "msdata:MainDataTable", m_tableName)
+				xml_elem_setattribute(m_xml_element, "msdata:UseCurrentLocale", "true")
+				xml_elem_addchild(m_xml_schema, m_xml_element)
+
+				;;create complex type
+				m_xml_complexType = xml_elem_create()
+				xml_elem_setname(m_xml_complexType, "xs:complexType")
+				xml_elem_addchild(m_xml_element, m_xml_complexType)
+
+				;;create choice
+				m_xml_choice = xml_elem_create()
+				xml_elem_setname(m_xml_choice, "xs:choice")
+				xml_elem_setattribute(m_xml_choice, "minOccurs", "0")
+				xml_elem_setattribute(m_xml_choice, "maxOccurs", "unbounded")
+				xml_elem_addchild(m_xml_complexType, m_xml_choice)
+
+				;;create element element
+				m_xml_element = xml_elem_create()
+				xml_elem_setname(m_xml_element, "xs:element")
+				xml_elem_setattribute(m_xml_element, "name", m_tableName)
+				xml_elem_addchild(m_xml_choice, m_xml_element)
+
+				;;create complex type
+				m_xml_complexType = xml_elem_create()
+				xml_elem_setname(m_xml_complexType, "xs:complexType")
+				xml_elem_addchild(m_xml_element, m_xml_complexType)
+
+				;;create sequence type
+				m_xml_sequence = xml_elem_create()
+				xml_elem_setname(m_xml_sequence, "xs:sequence")
+				xml_elem_addchild(m_xml_complexType, m_xml_sequence)
+
+				;;to the sequence tag we add the individual column definitions
+				for count from 0 thru m_columns.Count - 1
+				  begin
+					data column					,@SynPSG.data.DataColumn
+
+					column = m_columns[count]
+
+					;;create column element
+					m_xml_element = xml_elem_create()
+					xml_elem_setname(m_xml_element, "xs:element")
+					xml_elem_setattribute(m_xml_element, "name", column.ColumnName)
+
+					;;include the column caption
+					xml_elem_setattribute(m_xml_element, "msdata:Caption", column.Caption)
+
+					;;include read only tag, if required
+					if (column.ReadOnly==true)
+					  begin
+						xml_elem_setattribute(m_xml_element, "msdata:ReadOnly", "true")
+					  end
+
+					using column.DataType select
+					(SynPSGSystem.Type.DataTypes.String), xml_elem_setattribute(m_xml_element, "type", "xs:string")
+					(SynPSGSystem.Type.DataTypes.Integer), xml_elem_setattribute(m_xml_element, "type", "xs:integer")
+					(SynPSGSystem.Type.DataTypes.Bool), xml_elem_setattribute(m_xml_element, "type", "xs:boolean")
+					(SynPSGSystem.Type.DataTypes.DateTime), xml_elem_setattribute(m_xml_element, "type", "xs:date")
+					(SynPSGSystem.Type.DataTypes.Byte), xml_elem_setattribute(m_xml_element, "type", "xs:unsignedByte")
+					(SynPSGSystem.Type.DataTypes.Char), nop		;;no type defined for Char types
+					(SynPSGSystem.Type.DataTypes.Decimal), xml_elem_setattribute(m_xml_element, "type", "xs:decimal")
+					endusing
+
+					xml_elem_setattribute(m_xml_element, "minOccurs", "0")
+					xml_elem_addchild(m_xml_sequence, m_xml_element)
+
+				  end
+
+			  end
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; writeTheXMLData
+		;;
+		;; Adds the data to the XML document
+		;;
+		;;*******************************************************************
+
+		private method writeTheXMLData				,void
+			
+		stack record
+			rowCount							,Int
+			colCount							,Int
+		proc
+			
+			;;write out each row of data in the table
+			for rowCount  from 0 thru m_rows.Count - 1 
+			  begin
+			    data row					,@SynPSG.data.DataRow
+
+				row = m_rows[rowCount]
+
+				m_xml_table = xml_elem_create()
+				xml_elem_setname(m_xml_table, m_tableName)
+				xml_elem_addchild(m_xml_root, m_xml_table)
+				
+				;;now add the actual column data
+				for colCount from 0 thru m_columns.Count - 1
+				  begin
+					data column					,@SynPSG.data.DataColumn
+
+					;;only include the column if we have data in the 
+					if (row.IsNull(colCount)==true)
+						nextloop
+
+					column = m_columns[colCount]
+
+					;;create column element
+					m_xml_element = xml_elem_create()
+					xml_elem_setname(m_xml_element, column.ColumnName)
+
+					using column.DataType select
+					(SynPSGSystem.Type.DataTypes.String), xml_elem_settext(m_xml_element, row[colCount].ToString())
+					(SynPSGSystem.Type.DataTypes.Integer), xml_elem_settext(m_xml_element, row[colCount].ToString())
+					(SynPSGSystem.Type.DataTypes.Bool), xml_elem_settext(m_xml_element, row[colCount].ToString())
+					(SynPSGSystem.Type.DataTypes.DateTime), 
+					begin
+						data d					,@SynPSGSystem.DateTime
+
+						d=new SynPSGSystem.DateTime(row[colCount])
+						xml_elem_settext(m_xml_element, d.Date)
+					end
+					(SynPSGSystem.Type.DataTypes.Byte), xml_elem_settext(m_xml_element, row[colCount].ToString())
+					(SynPSGSystem.Type.DataTypes.Char), xml_elem_settext(m_xml_element, row[colCount].ToString())
+					(SynPSGSystem.Type.DataTypes.Decimal), xml_elem_settext(m_xml_element, row[colCount].ToString())
+					endusing
+
+					xml_elem_addchild(m_xml_table, m_xml_element)
+
+				  end
+			  end
+			
+		endmethod
+		
+	endclass
+		
+	public enum XMLWriteMode
+		DiffGram		,1
+		IgnoreSchema
+		WriteSchema
+	endenum
+	
+endnamespace

@@ -1,0 +1,153 @@
+;;***************************************************************************
+;;
+;;  Synergy Professional Services Group
+;;  Pseduo Data Rows Collection class
+;;
+;;
+;;***************************************************************************
+
+import System.Collections
+import SynPSGSystem.Exception
+import SynPSGSystem.Type
+import SynPSG.Data
+
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSG.Data
+
+	public sealed class DataRowCollection
+	
+		;;*******************************************************************
+		;;
+		;;  Public default constructor
+		;;
+		;;*******************************************************************
+
+		public method DataRowCollection
+
+		proc
+
+			m_rowCollection = new ArrayList()
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;;  Public methods
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;;  Add
+		;;
+		;;  Creates and adds a DataRow to the collection
+		;;
+		;;*******************************************************************
+
+		public method Add			,void
+			in req Row				,@SynPSG.Data.DataRow
+
+		proc
+
+			;;assign passed row
+			m_row = Row
+			
+			;;add to the collection
+			addRowToCollection()
+
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  Public properties
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;;  Count
+		;;
+		;;  Return the number of rows in the collection
+		;;
+		;;*******************************************************************
+
+		public property Count					,Int
+
+			method get
+			proc
+				mreturn m_rowCollection.Count
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;;  Indexer
+		;;
+		;;  Allows access to the elements of the collection
+		;;
+		;;*******************************************************************
+
+
+		public property indexer					,@SynPSG.Data.DataRow
+			in req Index						,Int
+			method get
+
+			stack record
+				count							,i4
+
+			proc
+				;;return the data row at the requested index
+
+				count = m_rowCollection.Count
+
+				if (Index<0 || Index>=count)
+					throw new SynPSGSystem.exception.IndexOutOfRangeException("Data Row Index out of bounds", Index)
+
+				mreturn (SynPSG.Data.DataRow) m_rowCollection[Index]
+			endmethod
+		endproperty
+		;;*******************************************************************
+		;;
+		;; Private field declarations
+		;;
+		;;*******************************************************************
+
+		private m_rowCollection					,@ArrayList
+		private m_row							,@SynPSG.Data.DataRow
+		
+		;;*******************************************************************
+		;;
+		;; Private methods
+		;;
+		;;*******************************************************************
+		
+		;;*******************************************************************
+		;;
+		;; addRowToCollection
+		;;
+		;; Add the row details to the collection
+		;;
+		;;*******************************************************************
+
+		private method addRowToCollection		,void
+		proc
+
+			if (m_rowCollection == ^NULL)
+			  begin
+				;;create the array list collection instance
+
+				m_rowCollection = new System.collections.ArrayList()
+			  end
+
+			m_rowCollection.add(m_row)
+			
+			mreturn
+
+		endmethod
+
+	endclass
+
+endnamespace

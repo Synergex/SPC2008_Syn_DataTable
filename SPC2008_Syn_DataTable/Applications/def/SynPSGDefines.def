@@ -1,0 +1,32 @@
+;;***************************************************************************
+;;
+;;  Synergy Professional Services Group
+;;
+;;***************************************************************************
+
+;;***************************************************************************
+;;
+;;  Basic data type defines (for the compiler)
+;;
+;;***************************************************************************
+
+.define BoolDatatype				i1				;bool (true/false)
+.define CharDatatype				a1				;char
+.define DateTimeDatatype			@String			;date time type
+.define SynergyDateType				d8
+.define DecmialType					d28.10			;max decimal type
+.define IntegerType					D_NATINT		;integer
+
+.define true						1
+.define false						0
+
+;;***************************************************************************
+;;
+;;  Define some basic setting for DataColumns
+;;
+;;***************************************************************************
+
+.define CONST_COLUMN_PREFIX		"Column"
+.define CONST_MAX_NAME_LENGTH	100
+
+

@@ -1,0 +1,44 @@
+[Global]
+CurrentProject=SynPSGExamples.vpj
+[ActiveConfig]
+SynPSGSystem.vpj=Release
+SynPSGData.vpj=Release
+SynPSGExamples.vpj=Release
+TableDemo.vpj=Release
+[ProjectDates]
+SynPSGSystem.vpj=20080813143312759
+SynPSGData.vpj=20080813143153789
+SynPSGExamples.vpj=20080813143249750
+TableDemo.vpj=20080813154311188
+[TreeExpansion2]
++ SynPSGData.vpj
+  - Source Files
+  - Header Files
+  - Other Files
++ SynPSGExamples.vpj
+  - Source Files
+  - Header Files
+  - Other Files
++ SynPSGSystem.vpj
+  - Source Files
+  - Header Files
+  - Other Files
++ TableDemo.vpj
+  - Source Files
+  - Batch Files
+  - Other Files
+scroll:0
+[State]
+SCREEN: 1920 1200 171 91 1468 944 0 0 N 0 0 0 0 1035 542 0
+CWD: ..\Applications\src\SynPSGExamples
+FILEHIST: 9
+..\smc\xfpl.ini
+..\bat\BuildIt.bat
+\Temp\xfpl.log
+\Temp\client20080813042131.log
+..\Applications\src\SynPSGExamples\ProductTable.dbl
+..\dat\p.ddf
+..\setup.bat
+..\bat\runit.bat
+..\readme.txt
+TBCLASS: 0 0

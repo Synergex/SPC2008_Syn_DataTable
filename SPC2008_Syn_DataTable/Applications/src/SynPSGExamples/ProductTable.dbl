@@ -1,0 +1,194 @@
+
+;;
+;; Example of using the Data classes in Synergy
+;; minimum version 9.1.4a
+;;
+;; Richard C. Morris
+;;
+
+import SynPSGSystem
+import SynPSGSystem.Type
+import SynPSG.Data
+
+;;
+;;function returns a string to the client containing the table schema and data
+;;
+;;
+.function ProductTable							,@String
+;;end of argument list
+	
+.include "DEF:SynPSGDefines.def"
+
+.include "product" repository, stack record = "product"
+
+stack record iVar
+	chan				,int
+proc
+
+	init iVar
+	
+	;;ensure that the xml library is available
+	openelb("DBLDIR:synxml")
+	
+	begin
+		data table								,@SynPSG.Data.DataTable
+		data column								,@SynPSG.Data.DataColumn
+		data row								,@SynPSG.Data.DataRow
+		data dateField							,@SynPSGSystem.DateTime
+	
+		try 
+		begin
+			;;create a table
+			table = new SynPSG.Data.DataTable("ProductTable")
+
+			;;create the columns to match the product structure
+
+			;;SKU
+			column = new SynPSG.data.DataColumn("SKU")
+			column.Caption = "Product Code"
+			table.Columns.Add(column)
+
+			;;GROUP
+			column = new SynPSG.data.DataColumn("Group")
+			column.Caption = "Product group"
+			table.Columns.Add(column)
+
+			;;DESCRIPTION
+			column = new SynPSG.data.DataColumn("Description")
+			column.Caption = "Description"
+			table.Columns.Add(column)
+
+			;;PRIVE_GROUP
+			column = new SynPSG.data.DataColumn("PriceGroup")
+			column.Caption = "Price group"
+			table.Columns.Add(column)
+
+			;;SELLING_PRICE
+			column = new SynPSG.data.DataColumn("SellingPrice")
+			column.Caption = "Selling Price"
+			column.DataType = SynPSGSystem.Type.GetType("System.Decimal")
+			table.Columns.Add(column)
+
+			;;LAST_COST_PRICE
+			column = new SynPSG.data.DataColumn("LastCostPrice")
+			column.Caption = "Last cost price"
+			column.DataType = SynPSGSystem.Type.GetType("System.Decimal")
+			table.Columns.Add(column)
+
+			;;MOVING_AVG_COST_PRICE
+			column = new SynPSG.data.DataColumn("MovingAverageCostPrice")
+			column.Caption = "Moving average cost price"
+			column.DataType = SynPSGSystem.Type.GetType("System.Decimal")
+			table.Columns.Add(column)
+
+			;;QTY_IN_STOCK
+			column = new SynPSG.data.DataColumn("QuantityInStock")
+			column.Caption = "Quantity in stock"
+			column.DataType = SynPSGSystem.Type.GetType("System.Integer")
+			table.Columns.Add(column)
+
+			;;QTY_ALLOCATED
+			column = new SynPSG.data.DataColumn("QuantityAllocated")
+			column.Caption = "Quantity Allocated"
+			column.DataType = SynPSGSystem.Type.GetType("System.Integer")
+			table.Columns.Add(column)
+
+			;;QTY_IN_TRANSIT
+			column = new SynPSG.data.DataColumn("QuantityInTransit")
+			column.Caption = "Quantity in transit"
+			column.DataType = SynPSGSystem.Type.GetType("System.Integer")
+			table.Columns.Add(column)
+
+			;;ATY_ON_ORDER
+			column = new SynPSG.data.DataColumn("QuantityOnOrder")
+			column.Caption = "Quantity on order"
+			column.DataType = SynPSGSystem.Type.GetType("System.Integer")
+			table.Columns.Add(column)
+
+			;;REFERENCE
+			column = new SynPSG.data.DataColumn("Reference")
+			column.Caption = "Reference"
+			table.Columns.Add(column)
+
+			;;PUBLISHER
+			column = new SynPSG.data.DataColumn("Publisher")
+			column.Caption = "Publisher"
+			table.Columns.Add(column)
+
+			;;AUTHOR
+			column = new SynPSG.data.DataColumn("Author")
+			column.Caption = "Author"
+			table.Columns.Add(column)
+
+			;;TYPE
+			column = new SynPSG.data.DataColumn("Type")
+			column.Caption = "Type"
+			table.Columns.Add(column)
+
+			;;RATING
+			column = new SynPSG.data.DataColumn("Rating")
+			column.Caption = "Rating"
+			table.Columns.Add(column)
+		end
+		catch (e, @Exception)
+			throw e
+		endtry
+
+		;;now populate the table with the date
+		;;from the product file
+		
+		try 
+		begin
+			open(chan=syn_freechn(), i:i, "DATA:product.ism")
+
+			;;read each record
+			repeat
+			begin
+				reads(chan, product, eof)
+
+				;;create a new row, from the table
+				row = table.NewRow()
+				
+				;;populate the row with the record details
+				row["SKU"] = product.sku
+				row["Group"] = product.group
+				row["Description"] = product.description
+				row["PriceGroup"] = product.price_group
+				row["SellingPrice"] = ^a(product.selling_price)
+				row["LastCostPrice"] = ^a(product.last_cost_price)
+				row["MovingAverageCostPrice"] = ^a(product.moving_ave_cost_price)
+				row["QuantityInStock"] = ^a(product.qty_in_stock)
+				row["QuantityAllocated"] = ^a(product.qty_allocated)
+				row["QuantityInTransit"] = ^a(product.qty_in_transit)
+				row["QuantityOnOrder"] = ^a(product.qty_on_order)
+				row["Reference"] = product.reference
+				row["Publisher"] = product.publisher
+				row["Author"] = product.author
+				row["Type"] = product.type
+				row["Rating"] = product.rating
+
+				;;add the row to the table
+				table.Rows.Add(row)
+
+			end
+eof,
+			;;all done
+		end
+		catch (e, @Exception)
+		begin
+			throw e		;;re-throw the exception
+		end
+		finally
+		begin
+			if (chan && chopen(chan))
+				close(chan)
+		end
+		endtry
+		
+		;;return the table to the calling client
+		 
+		freturn table.ReturnXML(XMLWriteMode.WriteSchema)
+		
+	end
+	
+end

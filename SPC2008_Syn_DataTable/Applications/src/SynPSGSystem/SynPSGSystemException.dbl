@@ -1,0 +1,132 @@
+;;*******************************************************************
+;;
+;; Synergy PSG System namespace, Exception Class
+;;
+;; Designed to allow similar exception handling to the .NET framework
+;;
+;; Authored by Richard C. Morris
+;;
+;;*******************************************************************
+
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSGSystem.Exception
+
+	public sealed class IndexOutOfRangeException extends System.Exception
+
+	;;define read only public fields that give additional information
+
+	public readonly InvalidIndex				,Int
+	
+	public method IndexOutOfRangeException
+		in req Message							,@String
+		in req Index							,Int
+	;end of argument list
+		parent(Message)
+	proc
+		;;set the passed index value
+		InvalidIndex = Index
+		
+	endmethod
+
+    endclass
+
+	public sealed class ArgumentException extends System.Exception
+
+	;;define read only public fields that give additional information
+
+	public readonly InvalidColumnName			,@String
+
+	public method ArgumentException
+		in req Message							,@String
+		in req ColumnName						,@String
+	;end of argument list
+		parent(Message)
+	proc
+		;;set the passed index value
+		InvalidColumnName = ColumnName
+
+	endmethod
+
+	endclass
+
+	public sealed class ArgumentNullException extends System.Exception
+
+	;;define read only public fields that give additional information
+
+	public method ArgumentNullException
+		in req Message							,@String
+	;end of argument list
+		parent(Message)
+	proc
+
+	endmethod
+
+	endclass
+
+	public sealed class ColumnNameTooLongException extends System.Exception
+
+	;;define read only public fields that give additional information
+	public readonly InvalidColumnName			,@String
+	public readonly ColumnLength				,Int
+	public readonly ColumnMaximum				,Int
+
+	public method ColumnNameTooLongException
+		in req Message							,@String
+		in req ColumnName						,@String
+	;end of argument list
+		parent(Message)
+	proc
+
+		InvalidColumnName = ColumnName
+		ColumnLength = ColumnName.Length
+		ColumnMaximum = CONST_MAX_NAME_LENGTH
+	endmethod
+
+	endclass
+
+	public sealed class DuplicateNameException extends System.Exception
+
+	;;define read only public fields that give additional information
+	public readonly InvalidColumnName			,@String
+
+	public method DuplicateNameException
+		in req Message							,@String
+		in req ColumnName						,@String
+	;end of argument list
+		parent(Message)
+	proc
+
+		InvalidColumnName = ColumnName
+	endmethod
+
+	endclass
+		
+	public sealed class ValueOutOfRangeException extends System.Exception
+
+	;;define read only public fields that give additional information
+	public readonly InvalidValue				,Int
+
+	public method ValueOutOfRangeException
+		in req Message							,@String
+		in req IntegerValue						,Int
+	;end of argument list
+		parent(Message)
+	proc
+
+		InvalidValue = IntegerValue
+	endmethod
+
+	public method ValueOutOfRangeException
+		in req Message							,@String
+		in req DecimalValue						,Decimal
+	;end of argument list
+		parent(Message)
+	proc
+
+		InvalidValue = DecimalValue
+	endmethod
+
+	endclass
+
+endnamespace

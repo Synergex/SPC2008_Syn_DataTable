@@ -1,0 +1,363 @@
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSGSystem
+
+	public sealed class DateTime
+		
+		;;*******************************************************************
+		;;
+		;; Public default constructor
+		;;
+		;;*******************************************************************
+
+		public method DateTime
+			
+		proc
+			m_instance_date = 0
+			m_instance_year = 0
+			m_instance_month = 0
+			m_instance_day = 0
+			m_instance_hour = 0  
+			m_instance_minute = 0
+			m_instance_second = 0
+			
+			mreturn
+			
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; alternate constructor
+		;; take a synergy YYYYMMDD date as input
+		;;
+		;;*******************************************************************
+
+		public method DateTime
+			in req SynergyDate					,decimal
+
+		proc
+
+			setDateTime(^a(SynergyDate))
+
+			mreturn 
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; alternate constructor
+		;; take a synergy YYYYMMDD date as input, in string format
+		;;
+		;;*******************************************************************
+
+		public method DateTime
+			in req SynergyDate					,@String
+
+		proc
+
+			setDateTime((string)SynergyDate)
+
+			mreturn 
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; alternate constructor
+		;; take a synergy YYYYMMDD date as input, in string format
+		;;
+		;;*******************************************************************
+
+		public method DateTime
+			in req SynergyDate					,@System.Object
+
+		proc
+
+			setDateTime((string)SynergyDate)
+
+			mreturn 
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; Public properties
+		;;
+		;;*******************************************************************
+		
+		;;*******************************************************************
+		;;
+		;; Date
+		;;
+		;; A new DateTime instance
+		;;
+		;;*******************************************************************
+		
+		public property Date					,DateTimeDataType
+			method get
+			proc
+				mreturn formatDate(true)
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Day
+		;;
+		;; Gets the day of the month
+		;;
+		;;*******************************************************************
+		
+		public property Day						,Int
+			method get
+			proc
+				mreturn m_instance_Day
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Day
+		;;
+		;; Gets the day of the month
+		;;
+		;;*******************************************************************
+
+		public property Month					,Int
+			method get
+			proc
+				mreturn m_instance_Month
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Year
+		;;
+		;; Gets the Year
+		;;
+		;;*******************************************************************
+
+		public property Year					,Int
+			method get
+			proc
+				mreturn m_instance_Year
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; DayOfWeek
+		;;
+		;; Gets the day of the week
+		;;
+		;;*******************************************************************
+
+		public property DayOfWeek				,DaysOfTheWeek
+			method get
+
+			stack record
+				day								,int
+
+			proc
+				wkday(day, m_instance_date)
+				using day select
+				(1), mreturn DaysOfTheWeek.Sunday
+				(2), mreturn DaysOfTheWeek.Monday
+				(3), mreturn DaysOfTheWeek.Tuesday
+				(4), mreturn DaysOfTheWeek.Wednesday
+				(5), mreturn DaysOfTheWeek.Thursday
+				(6), mreturn DaysOfTheWeek.Friday
+				(7), mreturn DaysOfTheWeek.Saturday
+				endusing
+			endmethod
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Public methods
+		;;
+		;;*******************************************************************
+		
+		;;*******************************************************************
+		;;
+		;; Public static properties
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;; Today
+		;;
+		;; Return the current date
+		;;
+		;;*******************************************************************
+		
+		public static property Today			,DateTimeDataType
+			method get
+			proc
+				setCurrentDate()
+				mreturn formatDate()
+			endmethod
+		endproperty
+		
+		;;*******************************************************************
+		;;
+		;; private declaration
+		;;
+		;;*******************************************************************
+		
+		;;instance fields
+		private static m_instance_date			,d8
+		private static m_instance_year			,d4
+		private static m_instance_month			,d2
+		private static m_instance_day			,d2
+		private static m_instance_hour			,d2
+		private static m_instance_minute		,d2
+		private static m_instance_second		,d2
+		
+		;;static fields
+		private static m_year					,d4
+		private static m_month					,d2
+		private static m_day					,d2
+		private static m_hour					,d2
+		private static m_minute					,d2
+		private static m_second					,d2
+		
+		
+		;;*******************************************************************
+		;;
+		;; private methods
+		;;
+		;;*******************************************************************
+		
+		;;*******************************************************************
+		;;
+		;; setPassedDate
+		;;
+		;; sets the passed date
+		;;
+		;;*******************************************************************
+
+		private method setDateTime				,void
+			in req SynergyDate					,@String
+
+		stack record
+			ddate								,a8
+			dyear								,d4@ddate
+			dmonth								,d2@ddate+4
+			dday								,d2@ddate+6
+
+		proc
+
+			ddate = SynergyDate
+
+			m_instance_date = ddate
+			m_instance_year = dyear
+			m_instance_month = dmonth
+			m_instance_day = dday
+			m_instance_hour = 0  
+			m_instance_minute = 0
+			m_instance_second = 0
+
+			mreturn 
+
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; setCurrentDate
+		;;
+		;; sets the current system date
+		;;
+		;;*******************************************************************
+
+		private static method setCurrentDate	,void
+			
+		stack record
+			sysDate								,a20
+			sysYear								,a4@sysDate
+			sysMonth							,a2@sysDate+4
+			sysDay								,a2@sysDate+6
+			SysHour								,a2@sysDate+8
+			sysMinute							,a2@sysDate+10
+			sysSeconds							,a2@sysDate+12
+			sysMilli							,a6@sysDate+14
+		proc
+			;;default to todays date
+			sysDate = Synergex.SynergyDE.datetime()
+			m_year = sysYear
+			m_month = sysMonth
+			m_day = sysDay
+			m_hour = sysHour
+			m_minute = sysMinute
+			m_second = sysSeconds
+			
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; formatDate
+		;;
+		;; Format the date to the current layout
+		;;
+		;;*******************************************************************
+
+		private static method formatDate		,@String
+			
+		stack record
+			tempString							,a100
+			tempDate							,@String
+		proc
+			
+			;;format date and time
+			;;2008-02-06T00:00:00+00:00
+			
+			xcall s_bld(tempString,, "%04d-%02d-%02d",
+			& m_year, m_month, m_day)
+			
+			tempDate = tempString
+			
+			mreturn tempDate
+		endmethod
+
+
+		;;*******************************************************************
+		;;
+		;; formatDate
+		;;
+		;; Format the date to the current layout
+		;;
+		;;*******************************************************************
+
+		private static method formatDate		,@String
+			in req UseInstanceData				,BoolDataType
+
+		stack record
+			tempString							,a100
+			tempDate							,@String
+		proc
+
+			;;format date and time
+			;;2008-02-06T00:00:00+00:00
+
+			xcall s_bld(tempString,, "%04d-%02d-%02d",
+			& m_instance_year, m_instance_month, m_instance_day)
+
+			tempDate = tempString
+
+			mreturn tempDate
+		endmethod
+
+	endclass	
+		
+	public enum DaysOfTheWeek
+		Sunday		,0
+		Monday
+		Tuesday
+		Wednesday
+		Thursday
+		Friday
+		Saturday
+
+	endenum
+	
+endnamespace

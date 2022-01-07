@@ -1,0 +1,148 @@
+
+;;
+;; Example of using the Data classes in Synergy
+;; minimum version 9.1.4a
+;;
+;; Richard C. Morris
+;;
+
+import SynPSGSystem
+import SynPSGSystem.Type
+import SynPSG.Data
+
+;;
+;;function returns a string to the client containing the table schema and data
+;;
+;;
+.function CustomerTable							,@String
+;;end of argument list
+	
+.include "DEF:SynPSGDefines.def"
+
+.include "customer" repository, stack record = "customer"
+
+stack record iVar
+	chan				,int
+proc
+
+	init iVar
+	
+	;;ensure that the xml library is available
+	openelb("DBLDIR:synxml")
+	
+	begin
+		data table								,@SynPSG.Data.DataTable
+		data column								,@SynPSG.Data.DataColumn
+		data row								,@SynPSG.Data.DataRow
+		data dateField							,@SynPSGSystem.DateTime
+	
+		try 
+		begin
+			;;create a table
+			table = new SynPSG.Data.DataTable("CustomerTable")
+
+			;;create the columns to match the product structure
+
+			;;ACCOUNT
+			column = new SynPSG.data.DataColumn("Account")
+			column.Caption = "Account Code"
+			table.Columns.Add(column)
+
+			;;COMPAY
+			column = new SynPSG.data.DataColumn("Company")
+			column.Caption = "Company Name"
+			table.Columns.Add(column)
+
+			;;NUMBER
+			column = new SynPSG.data.DataColumn("Number")
+			column.dataType = SynPSGSystem.type.gettype("System.Integer")
+			column.Caption = "Number"
+			table.Columns.Add(column)
+
+			;;STREET
+			column = new SynPSG.data.DataColumn("Street")
+			column.Caption = "Street"
+			table.Columns.Add(column)
+
+			;;CITY
+			column = new SynPSG.data.DataColumn("City")
+			column.Caption = "City"
+			table.Columns.Add(column)
+
+			;;REGION
+			column = new SynPSG.data.DataColumn("Region")
+			column.Caption = "Region"
+			table.Columns.Add(column)
+
+			;;DATE_OPENED
+			column = new SynPSG.data.DataColumn("DateOpened")
+			column.Caption = "Date Opened"
+			column.DataType = SynPSGSystem.Type.GetType("System.DateTime")
+			;;make the column read only
+			column.ReadOnly = true
+			table.Columns.Add(column)
+			
+			;;LIMIT
+			column = new SynPSG.data.DataColumn("CreditLimit")
+			column.Caption = "Credit Limit"
+			column.DataType = SynPSGSystem.Type.GetType("System.Decimal")
+			;;make the column read only
+			column.ReadOnly = true
+			table.Columns.Add(column)
+			
+		end
+		catch (e, @Exception)
+			throw e
+		endtry
+
+		;;now populate the table with the date
+		;;from the product file
+		
+		try 
+		begin
+		
+			open(chan=syn_freechn(), i:i, "DATA:customer.ism")
+			
+			;;read each record
+			repeat
+			begin
+				reads(chan, customer, eof)
+				
+				;;create a new row, from the table
+				row = table.NewRow()
+				
+				;;populate the row with the record details
+				row["Account"] = customer.account
+				row["Company"] = customer.company
+				row["Number"] = ^a(customer.number)
+				row["Street"] = customer.street
+				row["City"] = customer.city
+				row["Region"] = customer.region
+				row["DateOpened"] = ^a(customer.date_opened)
+				row["CreditLimit"] = ^a(customer.limit)
+
+				;;add the row to the table
+				table.Rows.Add(row)
+
+			end
+eof,
+			;;all done
+		end
+		catch (e, @Exception)
+		begin
+			throw e		;;re-throw the exception
+		end
+		finally
+		begin
+			if (chan && chopen(chan))
+				close(chan)
+		end
+		endtry
+		
+		;;return the table to the calling client
+		 
+		freturn table.ReturnXML(XMLWriteMode.WriteSchema)
+		
+	end
+	
+end

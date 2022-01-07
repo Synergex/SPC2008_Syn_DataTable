@@ -1,0 +1,468 @@
+;;***************************************************************************
+;;
+;;  Synergy Professional Services Group
+;;  Pseduo Data Row class
+;;
+;;
+;;***************************************************************************
+
+import SynPSGSystem.Exception
+import SynPSGSystem.Type
+import SynPSG.data
+
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSG.Data
+
+	public sealed class DataRow
+		
+		;;*******************************************************************
+		;;
+		;;  Public default constructor
+		;;
+		;;*******************************************************************
+
+		public method DataRow
+
+		proc
+			;;create a new instance of the column array list
+			m_columns = new System.collections.ArrayList()
+			m_data = new System.collections.ArrayList()
+			m_hasData = new System.collections.ArrayList()
+			
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;;  Alternative constructor, used by the table class
+		;;
+		;;*******************************************************************
+
+		public method DataRow
+			in req Table						,@SynPSG.data.DataTable
+			this()
+			;end of argument list
+			
+		proc
+			
+			storeTableDetails(Table)
+			
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; Public proterties
+		;;
+		;;*******************************************************************
+
+		;;*******************************************************************
+		;;
+		;; Table
+		;;
+		;; Gets the table associated with this row
+		;;
+		;;*******************************************************************
+
+		public property Table					,@SynPSG.data.DataTable
+		method get
+		proc
+			mreturn m_table
+		endmethod
+		endproperty
+		
+
+		;;*******************************************************************
+		;;
+		;; Indexer
+		;;
+		;; sets the data for the required column
+		;;
+		;;*******************************************************************
+
+		public property Indexer					,@String
+			in req Index						,Int
+		method set
+			
+		proc
+
+			setColumnData(Index, value)
+			
+			mreturn
+		endmethod
+		
+		method get
+			
+		proc
+
+			mreturn (string) m_data[Index]
+			
+		endmethod
+		
+		endproperty
+
+		;;*******************************************************************
+		;;
+		;; Indexer
+		;;
+		;; sets the data for the required column
+		;;
+		;;*******************************************************************
+		public property Indexer					,@String
+			in req ColumnName					,@String
+			
+		method set
+
+		stack record
+			column								,@SynPSG.data.DataColumn
+			ii									,Int
+			index								,Int
+			found								,BoolDatatype
+
+		proc
+
+			;;store the required data
+
+			found = false
+			
+			;;First, find the index from the column name
+			for ii from 0 thru m_columns.Count - 1
+			  begin
+				column = (SynPSG.data.DataColumn) m_columns[ii]
+				if (column.columnName == ColumnName)
+				  begin
+					found = true
+					exitloop
+				  end
+			  end
+			  
+			if (found == false)
+				throw new SynPSGSystem.Exception.ArgumentException("Column Specification Invalid", ColumnName)
+			
+			setColumnData(ii, value)
+
+			mreturn
+		endmethod
+
+		method get
+
+		proc
+			mreturn (string) m_data[1]
+
+		endmethod
+
+		endproperty
+
+
+		;;*******************************************************************
+		;;
+		;; IsNull
+		;;
+		;; Gets a value that specifies if the specified column contains a null
+		;; value
+		;;
+		;;*******************************************************************
+
+		public method IsNull					,BoolDataType
+			in req ColumnIndex					,Int
+			
+		stack record
+			tmpO								,@Object
+			tmpA								,a1
+			tmpI								,i1
+			
+
+		proc
+			
+			tmpO = m_hasData[ColumnIndex]
+			tmpA = tmpO.ToString()
+			tmpI = tmpA
+			
+			mreturn !tmpI
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; Private field declarations
+		;;
+		;;*******************************************************************
+
+		private m_table							,@SynPSG.data.DataTable
+		private m_columns						,@System.collections.ArrayList
+		private m_data							,@System.collections.ArrayList
+		private m_hasData						,@System.collections.ArrayList
+		
+		private m_holdingString					,@System.String
+		
+		;;*******************************************************************
+		;;
+		;; Private method declarations
+		;;
+		;;*******************************************************************
+		
+		private method setColumnData	,void
+			in		req	index			,int
+			in		req	columnData		,@String
+
+		stack record
+			column								,@SynPSG.data.DataColumn
+
+		proc
+			
+			;;validate the passed index is valid
+			if (index < 0 || index > m_columns.Count)
+				throw new SynPSGSystem.exception.IndexOutOfRangeException("Column Index Invalid", index)
+
+			;;store the required data
+
+			;;need to do special processing, depending on data type
+			column = (SynPSG.data.DataColumn) m_columns[Index]
+
+			using column.DataType select
+			(SynPSGSystem.Type.DataTypes.String, SynPSGSystem.Type.DataTypes.Char),
+			  begin
+				storeStringData(Index, columnData)
+			  end
+			(SynPSGSystem.Type.DataTypes.Integer),
+				begin
+				  storeIntegerData(Index, columnData)
+				end
+			(SynPSGSystem.Type.DataTypes.Decimal),
+				begin
+				  storeDecimalData(Index, columnData)
+				end
+			(SynPSGSystem.Type.DataTypes.Bool),
+				begin
+				  storeBoolData(Index, columnData)
+				end
+			(SynPSGSystem.Type.DataTypes.DateTime),
+				begin
+				  storeDateData(Index, columnData)
+				end
+			(SynPSGSystem.Type.DataTypes.Byte),
+				begin
+				  storeByteData(Index, columnData)
+				end
+			endusing
+
+			m_data[Index] = m_holdingString
+			
+		endmethod
+		
+		
+		private method storeTableDetails		,void
+			in req Table						,@SynPSG.Data.DataTable
+
+		stack record
+			count								,Int
+			totalCols							,Int
+
+		proc
+			;;set the table details
+			m_table = Table
+		
+			;;create an array storing the column details
+		
+			totalCols = m_table.Columns.Count
+		
+			for count from 0 thru totalCols - 1
+			  begin
+				;;for each column defined in the table, create a column
+				;;add it to the column collection
+				data obj						,@System.Object
+		
+				m_columns.Add(m_table.Columns[count])
+				m_data.Add(obj)
+				m_hasData.Add((object)0)
+		
+			  end
+		
+			mreturn
+		endmethod			
+		
+		;;*******************************************************************
+		;;
+		;; storeStringData
+		;;
+		;; method to store the passed string data
+		;;
+		;;*******************************************************************
+
+		private method storeStringData			,void
+			in req Index						,int
+			in req InString						,@String
+		proc
+			
+			m_holdingString = InString
+			if (m_holdingString.Length!=0)
+				m_hasData[Index] = (object) 1
+
+			
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; storeIntegerData
+		;;
+		;; method to store the passed integer data
+		;;
+		;;*******************************************************************
+
+		
+		private method storeIntegerData			,void
+			in req Index						,int
+			in req InInteger					,@String
+
+		record
+			holdInt								,int
+		proc
+
+			clear holdInt
+			m_holdingString = InInteger
+			try 
+				holdInt = InInteger
+			catch (e, @Exception)
+				throw e
+			endtry
+			
+			if (holdInt!=0)
+				m_hasData[Index] = (object) 1
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; storeBoolData
+		;;
+		;; method to store the passed boolean data
+		;;
+		;;*******************************************************************
+
+		
+		private method storeBoolData			,void
+			in req Index						,int
+			in req InBool						,@String
+			
+		stack record
+			tmpA								,a1
+		proc
+
+			;;convert the inbound string to a true/false value
+			tmpA = InBool
+			if (tmpA == "0")
+				then 
+					m_holdingString = "false"
+				else
+					m_holdingString = "true"
+
+			m_hasData[Index] = (object) 1
+
+			mreturn
+			
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; storeDateData
+		;;
+		;; method to store the passed date data
+		;;
+		;;*******************************************************************
+
+		
+		private method storeDateData			,void
+			in req Index						,int
+			in req InDate						,@String
+
+		record
+			holdDate							,d8
+			
+		proc
+
+			;;need to format the date
+			;;2008-02-06T00:00:00+00:00
+			
+			clear holdDate
+			
+			try 
+				holdDate = InDate
+			catch (e, @Exception)
+				throw e
+			endtry
+			
+			m_holdingString = InDate
+			
+			if (holdDate!=0)
+				m_hasData[Index] = (object) 1
+
+			mreturn
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; storeByteData
+		;;
+		;; method to store the passed byte data
+		;;
+		;;*******************************************************************
+
+		
+		private method storeByteData			,void
+			in req Index						,int
+			in req InByte						,@String
+			
+		stack record
+			tmpD								,d3
+		proc
+
+			tmpD = InByte
+			if (tmpD < 0 || tmpD > 255)
+				throw new SynPSGSystem.Exception.ValueOutOfRangeException("Byte value out of range", tmpD)
+			
+			m_holdingString = tmpD
+			
+			if (tmpD!=0)
+				m_hasData[Index] = (object) 1
+
+            mreturn
+
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; storeDecimalData
+		;;
+		;; method to store the passed decimal data
+		;;
+		;;*******************************************************************
+
+
+		private method storeDecimalData			,void
+			in req Index						,int
+			in req InDecimal					,@String
+
+		stack record
+			tmpD								,d28.10
+		proc
+
+			try 
+				tmpD = InDecimal
+			catch (e, @Exception)
+				throw e
+			endtry
+
+			m_holdingString = tmpD
+
+			if (tmpD!=0.0)
+				m_hasData[Index] = (object) 1
+
+			mreturn
+
+		endmethod
+
+	endclass
+
+endnamespace

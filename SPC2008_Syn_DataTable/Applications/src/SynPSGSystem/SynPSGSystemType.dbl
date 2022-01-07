@@ -1,0 +1,109 @@
+.include "DEF:SynPSGDefines.def"
+
+namespace SynPSGSystem.Type
+
+	public sealed class Type
+
+		;;*******************************************************************
+		;;
+		;; Public default constructor
+		;;
+		;;*******************************************************************
+
+		public method Type
+			
+		proc
+			
+			;;set the default data type
+			m_defaultType = DataTypes.String
+			
+			mreturn
+		endmethod
+		
+		;;*******************************************************************
+		;;
+		;; Public methods
+		;;
+		;;*******************************************************************
+		
+		public static method GetType	,DataTypes
+			in req DataType		,@String
+			
+		stack record
+			typeString			,a100
+			typeValue			,DataTypes
+			
+		proc
+			
+			typeString = DataType
+			upcase typeString
+			
+			typeValue = DataTypes.Null
+			
+			using typeString select
+			("SYSTEM.STRING"),
+			  begin
+				;;string data type
+				typeValue = DataTypes.String
+			  end
+			("SYSTEM.DATETIME"),
+			  begin
+				;;boolean data type
+				typeValue = DataTypes.DateTime
+			  end
+			("SYSTEM.BOOLEAN"),
+			  begin
+				;;boolean data type
+				typeValue = DataTypes.Bool
+			  end
+			("SYSTEM.BYTE"),
+			  begin
+				;;boolean data type
+				typeValue = DataTypes.Byte
+			  end
+			("SYSTEM.CHAR"),
+			  begin
+				;;boolean data type
+				typeValue = DataTypes.Char
+			  end
+			("SYSTEM.DECIMAL"),
+			  begin
+				;;boolean data type
+				typeValue = DataTypes.Decimal
+			  end
+			("SYSTEM.INTEGER"),
+			  begin
+				;;boolean data type
+				typeValue = DataTypes.Integer
+			  end
+			endusing
+			;;see if it's a recognised, valid data type
+			
+			if (typeValue == DataTypes.Null)
+				throw new Exception("Invalid Data Type specified")
+			
+			mreturn typeValue
+		endmethod
+
+		;;*******************************************************************
+		;;
+		;; Private field declarations
+		;;
+		;;*******************************************************************
+
+		private m_defaultType		,DataTypes
+
+	endclass
+		
+	public enum DataTypes
+		Null			,0
+		String
+		Integer
+		Bool
+		DateTime
+		Byte
+		Char
+		Decimal
+	endenum
+	
+endnamespace
